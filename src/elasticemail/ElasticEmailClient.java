@@ -31,27 +31,76 @@ public class ElasticEmailClient {
 	
 	private ElasticEmailProperties props;
 	
+	/**
+	 * <p>You will pass an implementation of this interface in order to supply the credentials needed for the Elastic Email API.</p> 
+	 * @author broc.seib@gmail.com
+	 */
 	public interface ElasticEmailProperties {
+		/**
+		 * @return the Elastic Email API username. It is probably an email address.
+		 */
 		public String getElasticEmailUserName();
+		/**
+		 * @return the Elastic Email API Key. It looks like a hash string.
+		 */
 		public String getElasticEmailApiKey();
 	}
 	
+	/**
+	 * <p>Create an instance of a client that can speak to the Elastic Email service in the cloud.</p>
+	 * 
+	 * <p>As for its statefulness, the reference 'props' that you pass it is kept as a member variable, but that's all. No other state is kept.
+	 * So you can keep a single instance of this class around, or re-instantiate it with the same props if you wish next time you need it.</p>
+	 * 
+	 * @param props {@link ElasticEmailProperties} credentials needed to communicate with the Elastic Email API
+	 */
 	public ElasticEmailClient(ElasticEmailProperties props) {
 		this.props = props;
 	}
 
-	/*
-	 * toEmails is a semi colon separated list of email recipients**
+
+	/**
+	 * <p>Sends a plain text email.</p>
+	 * 
+	 * <p>This will send an outbound email via Elastic Email. Note that you must have already set up Elastic Email via their website to send
+	 * emails from a particular domain, and your "from" fields need to match that domain.</p> 
+	 * 
+	 * @param channel  This is an arbitrary string so that you can run reports at Elastic Email and bucket your outbound email statistics. Pass null to ignore.
+	 * @param fromEmail  This is the email address that the email will be "from".
+	 * @param fromName  This is the human readable name of the person (or bot) the email will be "from".
+	 * @param toEmails  This is a semicolon separated list of email recipients.
+	 * @param subject  This is the Subject line of the email.
+	 * @param bodyText  This is the plain text body of the email. 
+	 * @return A transactionId string is returned, which can be passed to {@link #getStatus(String)} to check the status of your message delivery.
+	 * @throws IOException  The Elastic Email API is over HTTP. If any communication goes awry, you'll get an IOException.
 	 */
-	public String sendEmail(String channel, String fromEmail, String fromName, String toEmails, String subject, String bodyText) throws IOException {
+	public TransactionId sendEmail(String channel, String fromEmail, String fromName, String toEmails, String subject, String bodyText) throws IOException {
 		return sendEmail(channel, fromEmail, fromName, toEmails, subject, bodyText, null, null);
 	}
 
 	/*
 	 * toEmails is a semi colon separated list of email recipients**
-	 * updated 10/26/2011 per this: http://stackoverflow.com/questions/2793150/how-to-use-java-net-urlconnection-to-fire-and-handle-http-requests
+	 * 
 	 */
-	public String sendEmail(String channel, String fromEmail, String fromName, String toEmails, String subject, String bodyText, String bodyHtml, List<AttachmentId> attachmentIds) throws IOException {
+	
+	/**
+	 * <p>Sends an email with both plain text and html versions available for the client to choose to display. Attachments can be made as well.</p>
+	 * 
+	 * <p>This implementation was updated 10/26/2011 per this:
+	 * http://stackoverflow.com/questions/2793150/how-to-use-java-net-urlconnection-to-fire-and-handle-http-requests</p>
+	 * 
+	 * @param channel  This is an arbitrary string so that you can run reports at Elastic Email and bucket your outbound email statistics. Pass null to ignore.
+	 * @param fromEmail  This is the email address that the email will be "from".
+	 * @param fromName  This is the human readable name of the person (or bot) the email will be "from".
+	 * @param toEmails  This is a semicolon separated list of email recipients.
+	 * @param subject  This is the Subject line of the email.
+	 * @param bodyText  This is the plain text body of the email. 
+	 * @param bodyHtml  This is the html version of the email body. Pass null to not supply an html version of the body.
+	 * @param attachmentIds  If you have any attachments, list them here. They must be uploaded in advance by calling {@link #uploadAttachment(InputStream, String)}.
+	 * @return
+	 * @throws IOException  The Elastic Email API is over HTTP. If any communication goes awry, you'll get an IOException.
+	 */
+	public TransactionId sendEmail(String channel, String fromEmail, String fromName, String toEmails, String subject, String bodyText, String bodyHtml, List<AttachmentId> attachmentIds) throws IOException {
 		StringBuilder buf = new StringBuilder();
 		buf.append("username=").append(urlEncodeUTF8(props.getElasticEmailUserName()));
 		buf.append("&api_key=").append(urlEncodeUTF8(props.getElasticEmailApiKey()));
@@ -110,7 +159,7 @@ public class ElasticEmailClient {
 			in = new BufferedReader(new InputStreamReader(response, UTF8));
 			String transactionId = in.readLine(); // only expect a single line
 			//System.out.println("got back txId = " +transactionId);
-			return transactionId;
+			return new TransactionId(transactionId);
 		}
 		catch( IOException e ){
 			throw new IOException("Unable to read response from server for sendEmail.");
@@ -123,6 +172,19 @@ public class ElasticEmailClient {
 		}
 	}
 	
+	/**
+	 * <p>Upload an email attachment.</p>
+	 * 
+	 * <p>Attachments must be uploaded in advance of sending out email messages. Each uploaded attachment is assigned an {@link AttachmentId},
+	 * which will be referred to when sending a message with an attachment.</p> 
+	 * 
+	 * @param data  Supply a binary of your attachment, in the form of an InputStream.
+	 * @param filename  Provide a name for your attachment. Use the obvious file extensions, as they will likely help on the client side
+	 * when the attachment is received.
+	 * @return The {@link AttachmentId} returned will be used in {@link #sendEmail(String, String, String, String, String, String, String, List)}
+	 * to specify the attachment(s) to be used for the message.
+	 * @throws IOException  The Elastic Email API is over HTTP. If any communication goes awry, you'll get an IOException.
+	 */
 	public AttachmentId uploadAttachment(InputStream data, String filename) throws IOException {
 		StringBuilder params = new StringBuilder();
 		params.append("?username=").append(urlEncodeUTF8(props.getElasticEmailUserName()));
@@ -185,9 +247,17 @@ public class ElasticEmailClient {
 		}
 	}
 	
-	public MailerStatus getStatus(String transactionId) throws IOException {
+	/**
+	 * <p>Poll the status of an outbound message.</p>
+	 * 
+	 * @param transactionId  This is a TransactionId that you were given when you made the call to send the outbound message.
+	 * @return {@link MailerStatus}, which contains counters for number delivered, bounced, etc. But for now, this class ({@link ElasticEmailClient})
+	 * is setup to only send out messages one at a time, so the value returned in one of the fields of MailerStatus should only be a 1.
+	 * @throws IOException  The Elastic Email API is over HTTP. If any communication goes awry, you'll get an IOException.
+	 */
+	public MailerStatus getStatus(TransactionId transactionId) throws IOException {
 		StringBuilder buf = new StringBuilder();
-		buf.append(API_STATUS).append("/").append(transactionId).append("?showstats=true");
+		buf.append(API_STATUS).append("/").append(transactionId.getId()).append("?showstats=true");
 //		buf.append("&username=").append(urlEncodeUTF8(USERNAME));
 //		buf.append("&api_key=").append(urlEncodeUTF8(API_KEY));
 //System.out.println("status url: "+buf.toString());
@@ -262,7 +332,13 @@ public class ElasticEmailClient {
 		return status;
 	}
 	
-	static public String urlEncodeUTF8(String url) {
+	/**
+	 * <p>Convenience function to always url encode with UTF-8.</p>
+	 * 
+	 * @param url The URL to be encoded
+	 * @return  UTF-8 encoded URL
+	 */
+	static private String urlEncodeUTF8(String url) {
 		try {
 			return URLEncoder.encode(url, "UTF-8");
 		}
