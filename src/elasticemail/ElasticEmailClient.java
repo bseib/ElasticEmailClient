@@ -147,7 +147,7 @@ public class ElasticEmailClient {
 
 		// get result code
 		int responseCode = ((HttpURLConnection) con).getResponseCode();
-		logger.debug("send email response code = " +responseCode);
+		logger.info("email sent. response={} to={}, from={}, subject={}", responseCode, toEmails, fromEmail, subject);
 		if ( responseCode != 200 ) {
 			throw new IOException("bad response code: " + responseCode);
 		}
@@ -209,7 +209,7 @@ public class ElasticEmailClient {
 				out.write(buffer, 0, bytesRead);
 				total += bytesRead;
 			}
-			logger.debug("total bytes uploaded: " + total);
+			logger.debug("total bytes uploaded: {}", total);
 		}
 		finally {
 			if ( out != null ) {
@@ -222,7 +222,7 @@ public class ElasticEmailClient {
 
 		// get result code
 		int responseCode = ((HttpURLConnection) con).getResponseCode();
-		logger.debug("upload attachment response code = " +responseCode);
+		logger.debug("upload attachment response code = {}", responseCode);
 		if ( responseCode != 200 ) {
 			throw new IOException("bad response code: " + responseCode);
 		}
@@ -233,7 +233,7 @@ public class ElasticEmailClient {
 		try {
 			in = new BufferedReader(new InputStreamReader(response, UTF8));
 			String attachmentId = in.readLine(); // only expect a single line
-			logger.debug("got back attachmentId = " +attachmentId);
+			logger.debug("got back attachmentId = {}", attachmentId);
 			return new AttachmentId(attachmentId);
 		}
 		catch( IOException e ){
