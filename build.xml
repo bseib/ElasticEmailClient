@@ -1,11 +1,32 @@
 <project name="ElasticEmailClient" default="dist" basedir=".">
 	<description>
-        simple example build file
+        Builds the ElasticEmailClient jar file. Edit the build.properties file to bump version number.
     </description>
-	<!-- set global properties for this build -->
+	<property file="build.properties" />
+	<property file="${user.home}/build.properties" />
+	<!--
+	  These properties generally define file and directory names (or paths) that
+	  affect where the build process stores its outputs.
+	
+	  app.name             Base name of this application, used to
+	                       construct filenames and directories.
+	                       Defaults to "myapp".
+	
+	  app.version          Version number of this iteration of the application.
+	
+	  build.home           The directory into which the "prepare" and
+	                       "compile" targets will generate their output.
+	                       Defaults to "build".
+	
+	  dist.home            The name of the base directory in which
+	                       distribution files are created.
+	                       Defaults to "dist".
+	-->
+	<property name="app.name" value="AppName" />
+	<property name="app.version" value="1" />
 	<property name="src" location="src"/>
-	<property name="build" location="build"/>
-	<property name="dist"  location="dist"/>
+	<property name="build.home" location="build"/>
+	<property name="dist.home" value="${basedir}/dist" />
 
 	<path id="cp">
 		<fileset dir="lib">
@@ -17,13 +38,13 @@
 		<!-- Create the time stamp -->
 		<tstamp/>
 		<!-- Create the build directory structure used by compile -->
-		<mkdir dir="${build}"/>
+		<mkdir dir="${build.home}"/>
 	</target>
 
 	<target name="compile" depends="init"
         description="compile the source " >
-		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${src}" destdir="${build}" includeantruntime="false">
+		<!-- Compile the java code from ${src} into ${build.home} -->
+		<javac srcdir="${src}" destdir="${build.home}" includeantruntime="false" debug="on" debuglevel="lines,vars,source">
 			<classpath refid="cp"/>
 		</javac>
 	</target>
@@ -31,22 +52,22 @@
 	<target name="dist" depends="compile"
         description="generate the distribution" >
 		<!-- Create the distribution directory -->
-		<mkdir dir="${dist}/lib"/>
+		<mkdir dir="${dist.home}/lib"/>
 
-		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
-		<jar jarfile="${dist}/lib/ElasticEmailClient-${DSTAMP}.jar" basedir="${build}"/>
+		<!-- Put everything in ${build.home} into the ${app.name}-${app.version}.jar file -->
+		<jar jarfile="${dist.home}/lib/${app.name}-${app.version}.jar" basedir="${build.home}"/>
 		
 		<!-- build a jar with sources attached too -->
-		<jar destfile="${dist}/lib/ElasticEmailClient-${DSTAMP}-src.jar">
-			<fileset dir="${build}"/>
+		<jar destfile="${dist.home}/lib/${app.name}-${app.version}-src.jar">
+			<fileset dir="${build.home}"/>
 			<fileset dir="${src}" includes="**/*.java"/>
 		</jar>
 	</target>
 
 	<target name="clean"
         description="clean up" >
-		<!-- Delete the ${build} and ${dist} directory trees -->
-		<delete dir="${build}"/>
-		<delete dir="${dist}"/>
+		<!-- Delete the ${build.home} and ${dist.home} directory trees -->
+		<delete dir="${build.home}"/>
+		<delete dir="${dist.home}"/>
 	</target>
 </project>
