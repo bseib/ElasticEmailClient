@@ -3,7 +3,8 @@ package elasticemail;
 public enum DeliveryStatus {
 	
 	complete,
-	in_progress
+	in_progress,
+	submitted,
 	;
 
 }
