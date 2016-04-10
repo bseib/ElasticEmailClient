@@ -22,12 +22,10 @@
 	                       distribution files are created.
 	                       Defaults to "dist".
 	-->
-	<property name="app.name" value="AppName" />
-	<property name="app.version" value="1" />
 	<property name="src" location="src"/>
 	<property name="build.home" location="build"/>
 	<property name="dist.home" value="${basedir}/dist" />
-
+	
 	<path id="cp">
 		<fileset dir="lib">
 			<include name="**/*.jar"/>
@@ -39,6 +37,15 @@
 		<tstamp/>
 		<!-- Create the build directory structure used by compile -->
 		<mkdir dir="${build.home}"/>
+		
+		<!-- Create a year property for the javadocs footer -->
+		<tstamp>
+			<format property="year" pattern="yyyy"/>
+		</tstamp>
+		<!-- Create the build directory structure used by compile -->
+		<mkdir dir="${build}"/>
+		<!-- Read the version number from the VERSION file -->
+		<property file="VERSION"/>
 	</target>
 
 	<target name="compile" depends="init"
@@ -55,13 +62,40 @@
 		<mkdir dir="${dist.home}/lib"/>
 
 		<!-- Put everything in ${build.home} into the ${app.name}-${app.version}.jar file -->
-		<jar jarfile="${dist.home}/lib/${app.name}-${app.version}.jar" basedir="${build.home}"/>
+		<jar jarfile="${dist.home}/lib/ElasticEmailClient-${version}.jar" basedir="${build.home}"/>
 		
 		<!-- build a jar with sources attached too -->
-		<jar destfile="${dist.home}/lib/${app.name}-${app.version}-src.jar">
+		<jar destfile="${dist.home}/lib/ElasticEmailClient-${version}-src.jar">
 			<fileset dir="${build.home}"/>
 			<fileset dir="${src}" includes="**/*.java"/>
 		</jar>
+	</target>
+
+	<target name="docs" depends="init,compile" description="build the javadocs">
+        <javadoc
+        	access="public"
+        	author="true"
+        	destdir="javadoc"
+        	doctitle="ElasticEmailClient ${version} API"
+        	nodeprecated="false"
+        	nodeprecatedlist="false"
+        	noindex="false"
+        	nonavbar="false"
+        	notree="false"
+        	overview="${src}/overview.html"
+        	source="1.7"
+        	sourcepath="src"
+        	splitindex="true"
+        	use="true"
+        	version="true"
+        	windowtitle="ElasticEmailClient ${version} API"
+        >
+        	<classpath refid="cp"/>
+        	<fileset dir="src" defaultexcludes="yes">
+        		<exclude name="nanoxml/**"/>
+       		</fileset>
+        	<bottom><![CDATA[<i>Copyright &#169; ${year} Broc Seib. All Rights Reserved.</i>]]></bottom>
+		</javadoc>
 	</target>
 
 	<target name="clean"

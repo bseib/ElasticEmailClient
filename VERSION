@@ -1,0 +1,3 @@
+## this properties file is read by ant when doing a build
+datestamp = 2016041001
+version = 1.0.0

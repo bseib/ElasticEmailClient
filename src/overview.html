@@ -1,0 +1,71 @@
+/**
+
+<body>
+
+<h1>ElasticEmailClient</h1>
+
+<p>ElasticEmailClient is a java library that lets you send emails with ElasticEmail's API. It does not cover the
+full API, but is enough to send an email and check its status.
+</p>
+
+<h2>Example</h2>
+
+<p>You write a bit of code to supply your credentials. Something like this:</p>
+
+<code>
+<pre>
+public enum ElasticEmail {
+
+	$;
+
+	private ElasticEmailClient client = createElasticEmailClient();
+
+	public ElasticEmailClient getClient() {
+		return client;
+	}
+
+	private ElasticEmailClient createElasticEmailClient() {
+		return new ElasticEmailClient(new ElasticEmailProperties() {
+
+			@Override
+			public String getElasticEmailUserName() {
+				// you write something here to safely inject your credentials.
+				// this is an example:
+				return Keys.getElasticEmailClientUsername();
+			}
+
+			@Override
+			public String getElasticEmailApiKey() {
+				// you write something here to safely inject your credentials.
+				// this is an example:
+				return Keys.getElasticEmailClientApiKey();
+			}
+		});
+	}
+
+}
+</pre>
+</code>
+
+<p>Then you can send an email like this:</p>
+
+<code>
+<pre>
+
+	// send an email
+	ElasticEmailClient eec = ElasticEmail.$.getClient();
+	TransactionId tid = eec.sendEmail(channel, fromEmail, fromName, toEmails, subject, bodyText);
+	
+	// and later you can check the delivery status:
+	MailerStatus status = ElasticEmail.$.getClient().getStatus(tid);
+	if ( elasticemail.DeliveryStatus.complete.equals(status.getStatus()) ) {
+		isComplete = true;
+	}
+				
+</pre>
+</code>
+
+
+</body>
+
+ */
