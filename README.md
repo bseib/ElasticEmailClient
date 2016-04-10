@@ -3,6 +3,10 @@
 This is far from a complete lib to use the full Elastic Email API. But it has enough to send an
 email and get it's status. It's lightweight and has no dependencies.
 
+##Download Jar Files##
+
+  https://bitbucket.org/brocseib/elasticemailclient/downloads
+
 ## Example ##
 
 You write a bit of code to supply your credentials. Something like this:
